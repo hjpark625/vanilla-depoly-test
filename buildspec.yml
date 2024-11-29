@@ -1,0 +1,25 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+  pre_build:
+    commands:
+      - aws --version
+      - node --version
+      - yarn --version
+      - echo "Current directory:",
+      - pwd
+      - echo "List files in current directory:",
+      - ls -al
+      - aws s3 cp $DEVOPS_URI/.env ./
+      - yarn install
+  build:
+    commands:
+      - export PROJECT_ROOT=$CODEBUILD_SRC_DIR
+      - yarn build
+  post_build:
+    commands:
+      - aws s3 cp $CODEBUILD_SRC_DIR/dist $DEPLOY_TARGET_S3_URI --recursive
+      - aws cloudfront create-invalidation --distribution-id $DEPLOY_CLOUDFRONT_DIST_ID --paths '/index.html'
